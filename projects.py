@@ -195,6 +195,141 @@ def _scan_detect_stack(path: Path) -> list[str]:
     return stack
 
 
+# Ponytail: bounds — never read more than this many docs per project, never
+# return more than this many entry points / endpoints per project. Keeps
+# total scan cost O(n × 3 × file_cap) regardless of how fat READMEs get.
+_ENTRY_DOCS = ("package.json", "README.md", "readme.md", "AGENTS.md")
+_MAX_ENTRIES_PER_PROJECT = 10
+
+# URL / port patterns. Cap = avoid matching 200 examples in a single README.
+_URL_RX = re.compile(
+    r"https?://[^\s<>\"'`)\]]+",
+    re.I,
+)
+# Ponytail: PORT/HOST/URL/ENDPOINT must be followed by an actual port number,
+# not an IP address. Match digits only between `=` and a non-digit boundary.
+_PORT_RX = re.compile(
+    r"\b(?:PORT|ENDPOINT)\s*=\s*[\"']?(\d{2,5})\b|"
+    r"\b(?:port|localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})\b",
+    re.I,
+)
+# Skip URLs that are clearly not endpoints (images, badges, package registries,
+# CDNs, model hosting, agent skill registries, docs sites).
+_URL_SKIP_PATTERNS = (
+    re.compile(r"\.(?:png|jpg|jpeg|gif|svg|ico)(\?|$)", re.I),
+    re.compile(r"https?://(?:img\.shields\.io|github\.com/|www\.github\.com/|githubusercontent\.com/)", re.I),
+    re.compile(r"npmjs\.com/|pypi\.org/|crates\.io/|pkg\.pr\.new/", re.I),
+    re.compile(r"https?://unpkg\.com/|https?://cdn\.jsdelivr\.net/|https?://cdnjs\.cloudflare\.com/", re.I),
+    re.compile(r"https?://huggingface\.co/|https?://openai\.com/|https?://anthropic\.com/", re.I),
+    re.compile(r"https?://colab\.research\.google\.com/|https?://kaggle\.com/", re.I),
+    re.compile(r"https?://agentskills\.io|https?://opensource\.org/|https?://creativecommons\.org/", re.I),
+    re.compile(r"https?://(?:localhost|127\.0\.0\.1):\d+/(?:dist|src|lib|test|tests|node_modules|docs)/", re.I),
+)
+
+
+def _scan_read_text(path: Path) -> str:
+    """Read text file safely. Returns empty string on any failure."""
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _scan_extract_entry_points(path: Path) -> list[str]:
+    """Discover the project's primary entry point(s). Read-only.
+
+    Strategy:
+      - Node: package.json "main" field, plus any "scripts.start" / "scripts.dev"
+        that references a JS file.
+      - Python: pyproject.toml "scripts" entries, plus well-known root files
+        (main.py, app.py, launcher.py, __main__.py).
+      - Capped at _MAX_ENTRIES_PER_PROJECT.
+
+    Returns [] if nothing found.
+    """
+    found: list[str] = []
+
+    # Node: package.json
+    pj = path / "package.json"
+    if pj.exists():
+        try:
+            data = json.loads(_scan_read_text(pj))
+        except (json.JSONDecodeError, OSError):
+            data = None
+        if isinstance(data, dict):
+            main = data.get("main")
+            if isinstance(main, str) and main:
+                found.append(main)
+            scripts = data.get("scripts")
+            if isinstance(scripts, dict):
+                for key in ("start", "dev", "serve"):
+                    cmd = scripts.get(key)
+                    if isinstance(cmd, str) and cmd:
+                        # Extract just the file path from the command (best-effort).
+                        # e.g. "node src/server/app.js" → "src/server/app.js"
+                        parts = cmd.split()
+                        for p in parts:
+                            if p.endswith((".js", ".mjs", ".ts", ".cjs")) and not p.startswith("-"):
+                                if p not in found:
+                                    found.append(p)
+                                break
+
+    # Python: well-known root files
+    for candidate in ("main.py", "app.py", "launcher.py", "__main__.py", "run.py"):
+        if (path / candidate).exists() and candidate not in found:
+            found.append(candidate)
+
+    # Python: pyproject.toml [project.scripts] — TOML is fragile to parse; just
+    # check for the [project] section header and surface that there's an entry.
+    pyproject = path / "pyproject.toml"
+    if pyproject.exists() and "pyproject.toml" not in found:
+        txt = _scan_read_text(pyproject)
+        if "[project.scripts]" in txt or "[tool.poetry.scripts]" in txt:
+            # ponytail: don't try to parse TOML inline — note the section exists.
+            found.append("pyproject.toml [scripts]")
+
+    return found[:_MAX_ENTRIES_PER_PROJECT]
+
+
+def _scan_extract_endpoints(path: Path) -> list[str]:
+    """Discover URLs / ports the project instantiates. Read-only.
+
+    Searches README.md, AGENTS.md, and package.json for URL + port patterns.
+    Filters out image URLs and known badge registries. Capped.
+
+    Returns [] if nothing found. Format: ['http://127.0.0.1:4098', 'https://...'].
+    """
+    urls: list[str] = []
+
+    def _extract(text: str) -> None:
+        for m in _URL_RX.findall(text):
+            if any(pat.search(m) for pat in _URL_SKIP_PATTERNS):
+                continue
+            if m not in urls:
+                urls.append(m)
+                if len(urls) >= _MAX_ENTRIES_PER_PROJECT:
+                    return
+        for m in _PORT_RX.findall(text):
+            # Port regex has two groups; pick the non-empty one.
+            port = m[0] or m[1]
+            if not port:
+                continue
+            synthetic = f"http://127.0.0.1:{port}"
+            if synthetic not in urls:
+                urls.append(synthetic)
+                if len(urls) >= _MAX_ENTRIES_PER_PROJECT:
+                    return
+
+    for doc in _ENTRY_DOCS:
+        p = path / doc
+        if p.exists():
+            _extract(_scan_read_text(p))
+            if len(urls) >= _MAX_ENTRIES_PER_PROJECT:
+                break
+
+    return urls[:_MAX_ENTRIES_PER_PROJECT]
+
+
 def _scan_classify(path: Path) -> dict | None:
     """If path looks like a project, return a candidate record. Else None."""
     name = path.name
@@ -219,6 +354,8 @@ def _scan_classify(path: Path) -> dict | None:
         "stack": _scan_detect_stack(path),
         "markers": markers,
         "description": _scan_read_description(path),
+        "entry_points": _scan_extract_entry_points(path),
+        "endpoints": _scan_extract_endpoints(path),
     }
 
 
@@ -390,10 +527,13 @@ def _selftest() -> int:
     else:
         print(f"OK: scan idempotent (2 runs both {len(scan_a)})")
     # Each candidate has required keys + types
-    required = {"name", "path", "stack", "markers", "description"}
+    required = {"name", "path", "stack", "markers", "description",
+                "entry_points", "endpoints"}
     bad = [c for c in scan_a if not required.issubset(c.keys())
            or not isinstance(c["stack"], list)
-           or not isinstance(c["markers"], list)]
+           or not isinstance(c["markers"], list)
+           or not isinstance(c["entry_points"], list)
+           or not isinstance(c["endpoints"], list)]
     if bad:
         print(f"FAIL: {len(bad)} candidates missing required keys or wrong types")
         for c in bad[:3]:
@@ -401,6 +541,15 @@ def _selftest() -> int:
         fails += 1
     else:
         print(f"OK: scan candidates well-formed ({len(scan_a)} entries)")
+    # entry_points + endpoints must respect the cap (no project should
+    # return more than _MAX_ENTRIES_PER_PROJECT = 10 entries).
+    over_cap = [c["name"] for c in scan_a
+                if len(c["entry_points"]) > 10 or len(c["endpoints"]) > 10]
+    if over_cap:
+        print(f"FAIL: scan cap violated for {len(over_cap)} projects: {over_cap[:3]}")
+        fails += 1
+    else:
+        print(f"OK: scan respects per-project cap (10)")
     # No mutation: registry must be unchanged after scan.
     data_after = _load()
     if data_after != data:
