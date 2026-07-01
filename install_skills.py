@@ -25,16 +25,20 @@ import subprocess
 import sys
 from pathlib import Path
 
-# (skill name, absolute source dir, selftest script relative to skill dir)
+# (skill name, absolute source dir, selftest script relative to skill dir,
+#  install mode: 'full' = copy everything, 'skill_md_only' = copy only SKILL.md
+#  (used for roots that don't bundle scripts, e.g. Mavis))
 SKILLS = [
     ("projects-registry",      Path(r"C:/Users/zerop/Development/projects-registry"), "projects.py"),
     ("external-model-routing", Path(r"C:/hermes/skills/devops/external-model-routing"), None),
 ]
 
+# (root path, install mode for THIS root)
 TARGETS = [
-    Path(r"C:/Users/zerop/.config/opencode/skills"),
-    Path(r"C:/Users/zerop/.claude/skills"),
-    Path(r"C:/Users/zerop/.codex/skills"),
+    (Path(r"C:/Users/zerop/.mavis/skills"),                 "skill_md_only"),
+    (Path(r"C:/Users/zerop/.config/opencode/skills"),       "full"),
+    (Path(r"C:/Users/zerop/.claude/skills"),                "full"),
+    (Path(r"C:/Users/zerop/.codex/skills"),                 "full"),
 ]
 
 
@@ -70,15 +74,30 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
         return {"name": name, "src": str(src), "error": f"SKILL.md missing in source: {src}", "targets": []}
 
     target_results = []
-    for dst_root in TARGETS:
+    for dst_root, mode in TARGETS:
         dst = dst_root / name
         label = f"{dst_root.parent.name}/{name}"
         if not dst_root.exists():
             target_results.append({"label": label, "skipped": True, "reason": f"root missing: {dst_root}"})
             continue
+
+        # ponytail: skill_md_only roots (e.g. Mavis) ignore everything except SKILL.md.
+        # Always exclude .git/ — git pack objects have read-only ACLs and break shutil.copytree.
+        patterns = [".git", ".gitignore"]
+        if mode == "skill_md_only":
+            patterns += ["*.py", "*.json", "*.md.bak"]
+        ignore_fn = shutil.ignore_patterns(*patterns)
         try:
             if not dry:
-                shutil.copytree(src, dst, dirs_exist_ok=True)
+                shutil.copytree(src, dst, dirs_exist_ok=True, ignore=ignore_fn)
+                # skill_md_only: prune anything that snuck through besides SKILL.md
+                if mode == "skill_md_only":
+                    for f in dst.iterdir():
+                        if f.name != "SKILL.md":
+                            if f.is_dir():
+                                shutil.rmtree(f)
+                            else:
+                                f.unlink()
         except PermissionError as e:
             target_results.append({"label": label, "ok": False, "reason": f"permission denied: {e}"})
             continue
@@ -86,14 +105,14 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
             target_results.append({"label": label, "ok": False, "reason": f"copy failed: {e}"})
             continue
 
-        # verify SKILL.md landed and (if applicable) selftest passes
+        # verify SKILL.md landed; selftest only for full-mode targets (where scripts exist)
         if not dry:
             sm_ok = (dst / "SKILL.md").exists()
             if not sm_ok:
                 target_results.append({"label": label, "ok": False, "reason": "SKILL.md missing after copy"})
                 continue
 
-            if selftest:
+            if selftest and mode == "full":
                 ok, out = _run_selftest(dst, selftest, dry)
                 target_results.append({
                     "label": label,
@@ -101,7 +120,7 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
                     "selftest": out,
                 })
             else:
-                target_results.append({"label": label, "ok": True, "selftest": "(none)"})
+                target_results.append({"label": label, "ok": True, "selftest": f"(skipped, mode={mode})" if mode != "full" else "(none)"})
         else:
             target_results.append({"label": label, "ok": True, "selftest": "(dry-run)"})
 
