@@ -1,22 +1,28 @@
 ---
 name: projects-registry
-description: |
-  Fires when Director says "SunoSavvy", "JobbyJob", "VerbalChainsaw",
-  "opencode fork", "dev-pulse", "ARGUS", "center-audit", "poly-kalshi",
-  "Hermes", or any project name. ALSO fires on "where's X", "path to
-  X", "what's that project called", "test command for X". The canonical
-  registry lives at C:/Users/zerop/Development/projects-registry/ (repo,
-  GitHub: VerbalChainsaw/projects-registry). Hermes copy at
-  C:/hermes/skills/projects-registry/ is SKILL.md-only — invoke the
-  canonical script: `python C:/Users/zerop/Development/projects-registry/projects.py <mention>`.
-  Do NOT spin up file scans to find a project; this skill exists.
+description: "SunoSavvy, JobbyJob, VerbalChainsaw, ARGUS, dev-pulse paths..."
 ---
 
 # projects-registry
 
+## Critical — where the script lives
+
+This skill is installed at `C:/hermes/skills/projects-registry/` as
+**SKILL.md only**. The actual `projects.py` script is **NOT bundled
+here**. To invoke it, you MUST run the canonical-repo script:
+
+```
+python C:/Users/zerop/Development/projects-registry/projects.py <mention>
+```
+
+DO NOT run `python projects.py` from this skill's directory — that file
+does not exist there. The script auto-resolves to its bundled
+`projects.json` via `Path(__file__).parent` so the path above works
+without any environment variable.
+
 Single source of truth for project paths, aliases, and lead information.
 
-The canonical source-of-truth lives at
+The canonical source-of-truth lives in the repo at
 `C:/Users/zerop/Development/projects-registry/`. This Hermes copy is
 **SKILL.md only** — Hermes runtime does not bundle the script. Invoke
 the canonical-path script to look up a project.
@@ -31,13 +37,13 @@ the canonical-path script to look up a project.
   registry first, do NOT default to `find` / `ls` / `search_files`.
 - When you need the build / test / typecheck command for a project.
 
-## Procedure (canonical-path lookup)
+## Procedure
 
 ```bash
 python C:/Users/zerop/Development/projects-registry/projects.py <mention>
-python C:/Users/zerop/Development/projects-registry/projects.py --path <mention>   # just the path
-python C:/Users/zerop/Development/projects-registry/projects.py --list              # all 38 projects
-python C:/Users/zerop/Development/projects-registry/projects.py --selftest          # 15/15 must pass
+python C:/Users/zerop/Development/projects-registry/projects.py --path <mention>
+python C:/Users/zerop/Development/projects-registry/projects.py --list
+python C:/Users/zerop/Development/projects-registry/projects.py --selftest
 ```
 
 Match is case-insensitive, separator-insensitive (space / `-` / `_`
