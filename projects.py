@@ -68,7 +68,7 @@ SCAN_MARKERS = (
 )
 
 
-def _load():
+def _load() -> dict:
     try:
         return json.loads(REGISTRY.read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -83,7 +83,7 @@ def _load():
         sys.exit(f"registry read failed: {REGISTRY}\n  reason: {e}\n  fix: check the path exists and the disk is healthy")
 
 
-def _index(data):
+def _index(data: dict) -> dict:
     """Precompute lowercase alias -> project name. First wins on duplicates."""
     idx = {}
     for p in data["projects"]:
@@ -97,7 +97,7 @@ def _norm(s: str) -> str:
     return re.sub(r"[\s_-]+", "", s.lower())
 
 
-def lookup(mention: str, idx, data) -> list[dict]:
+def lookup(mention: str, idx: dict, data: dict) -> list[dict]:
     """Return all candidate projects matching `mention`.
 
     Match logic: case-insensitive, separator-insensitive substring match
@@ -229,10 +229,17 @@ _URL_SKIP_PATTERNS = (
 )
 
 
+# Ponytail: bound — never read more than this per file. Caps memory under
+# pathological READMEs (100MB binary-as-text would otherwise allocate fully).
+_MAX_READ_BYTES = 256 * 1024
+
+
 def _scan_read_text(path: Path) -> str:
-    """Read text file safely. Returns empty string on any failure."""
+    """Read text file safely. Returns empty string on any failure. Caps reads
+    at _MAX_READ_BYTES so a giant README can't spike memory."""
     try:
-        return path.read_text(encoding="utf-8", errors="replace")
+        with path.open("r", encoding="utf-8", errors="replace") as f:
+            return f.read(_MAX_READ_BYTES)
     except OSError:
         return ""
 
@@ -329,7 +336,11 @@ def _scan_extract_endpoints(path: Path) -> list[str]:
 
 
 def _scan_classify(path: Path) -> dict | None:
-    """If path looks like a project, return a candidate record. Else None."""
+    """If path looks like a project, return a candidate record. Else None.
+
+    Ponytail: skip symlinks pointing outside SCAN_ROOTS to avoid following
+    arbitrary filesystem targets during a scan.
+    """
     name = path.name
     if not name or name.startswith("."):
         return None  # skip dotfiles wholesale — keeps noise low
@@ -340,6 +351,8 @@ def _scan_classify(path: Path) -> dict | None:
             return None
     if not path.is_dir():
         return None
+    if path.is_symlink():
+        return None  # ponytail: don't follow symlinks — bounds blast radius
 
     # Has at least one canonical marker.
     markers = [m for m in SCAN_MARKERS if (path / m).exists()]
