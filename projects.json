@@ -1,0 +1,142 @@
+{
+  "$schema_version": 1,
+  "$comment": "Single source of truth for Director Gabriel's projects. Loaded by Hermes at session start via skill `projects-registry`. Edit aliases to add search terms. Edit `path` to relocate. Run /projects-registry <name> to look up. Run /projects-registry list to enumerate.",
+  "projects": [
+    {
+      "name": "Hermes",
+      "aliases": ["hermes", "hermes-agent", "hermes_agent", "nous hermes", "nous-research", "argus"],
+      "path": "C:/hermes",
+      "repo_path": "C:/hermes/hermes-agent",
+      "stack": ["python", "typescript", "solidjs", "electron"],
+      "test_cmd": "cd C:/hermes/hermes-agent && python -m pytest tests/ -x",
+      "typecheck_cmd": "cd C:/hermes/hermes-agent/apps/desktop && bun run typecheck",
+      "description": "Hermes Agent — the AI agent runtime Hermes itself runs in. Persona (SOUL.md), skills (skills/), gateway, MCP, desktop GUI. AGUS-family agent Director Gabriel built.",
+      "memory_anchors": [
+        "arbiter authority lives at C:/hermes/arbiter/PROTOCOL.md",
+        "SOUL.md is the persona — edit with skill_manage discipline",
+        "skills auto-scan from C:/hermes/skills/"
+      ]
+    },
+    {
+      "name": "SunoSavvy",
+      "aliases": ["sunosavvy", "suno-savvy", "suno savvy", "savvy", "suno-app"],
+      "path": "C:/Users/zerop/Development/SunoSavvy",
+      "stack": ["electron", "javascript", "sqlite", "better-sqlite3"],
+      "test_cmd": "cd C:/Users/zerop/Development/SunoSavvy/resources/app && npm test",
+      "build_cmd": "cd C:/Users/zerop/Development/SunoSavvy && npm run build",
+      "description": "Electron desktop app for managing a personal Suno music collection. Personal-use build phase; will be forked generically later. v3.4.0 ships Intel Hub (Lineage Forest + Mutation Engine + Body-of-Work).",
+      "memory_anchors": [
+        "main entry: resources/app/main.js",
+        "schema migrations live in resources/app/migrations.js",
+        "AGENTS.md bans re-debating the Suno-targeting decision"
+      ]
+    },
+    {
+      "name": "JobbyJob",
+      "aliases": ["jobbyjob", "jobby job", "jobby-job", "jj", "claude-jobbyjob"],
+      "path": "C:/Users/zerop/Claude/Projects/JobbyJob",
+      "alt_paths": ["C:/Users/zerop/Development/JobbyJob", "C:/Users/zerop/Development/Jobby Job"],
+      "stack": ["markdown", "json"],
+      "description": "Director's job-search workspace. Control-plane artifacts (task router, state snapshot, role playbooks, proof map) live here. Workspace mirror also exists under Development/.",
+      "memory_anchors": [
+        "primary workspace: C:/Users/zerop/Claude/Projects/JobbyJob",
+        "design system collateral: C:/Users/zerop/Development/JobbyJob Design System/"
+      ]
+    },
+    {
+      "name": "VerbalChainsaw OpenCode",
+      "aliases": ["verbalchainsaw", "verbal-chainsaw", "verbal chainsaw", "opencode", "opencode-source", "opencode fork", "autogoal"],
+      "path": "C:/Users/zerop/Development/opencode-source",
+      "stack": ["typescript", "solidjs", "electron", "bun"],
+      "test_cmd": "cd C:/Users/zerop/Development/opencode-source/packages/app && bun test --preload ./happydom.ts",
+      "typecheck_cmd": "cd C:/Users/zerop/Development/opencode-source/packages/app && bun run typecheck",
+      "description": "Director's fork of opencode (github.com/VerbalChainsaw/opencode). Monorepo with packages/app (SolidJS renderer), packages/desktop (Electron shell), packages/opencode (HTTP API), packages/autogoal (plugin).",
+      "memory_anchors": [
+        "AutoGoal lives in packages/autogoal/ — the retired sibling OpenGoal/ is FORBIDDEN",
+        "branch: dev",
+        "test runner: bun test --preload ./happydom.ts (app/desktop), node --test (autogoal)"
+      ]
+    },
+    {
+      "name": "dev-pulse",
+      "aliases": ["devpulse", "dev-pulse", "pulse"],
+      "path": "C:/Users/zerop/Development/dev-pulse",
+      "stack": ["python", "qt", "pyqt"],
+      "description": "Real-time local dev process dashboard. Native Qt window, tray-resident. Recently active (2026-07-01).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS_OSINT",
+      "aliases": ["argus-osint", "osint", "osint workbench", "evidence workbench"],
+      "path": "C:/Users/zerop/Development/ARGUS_OSINT",
+      "stack": ["python", "typescript", "vscode"],
+      "description": "ARGUS OSINT Evidence Workbench — privacy-aware OSINT investigation tool with VSCode integration, modular collector adapters, evidence preservation, claim graph, automated reporting.",
+      "memory_anchors": []
+    },
+    {
+      "name": "osint-console",
+      "aliases": ["osint-console", "osint console", "osint_cli"],
+      "path": "C:/Users/zerop/Development/osint-console",
+      "stack": ["python"],
+      "description": "Companion OSINT tooling. Recently active.",
+      "memory_anchors": []
+    },
+    {
+      "name": "center-audit",
+      "aliases": ["center-audit", "center_audit", "centeraudit", "audit-skill", "case-file audit"],
+      "path": "C:/Users/zerop/Development/center-audit",
+      "stack": ["markdown", "yaml"],
+      "description": "Evidence-gated, read-only, courtroom-disciplined root-cause audit skill for coding agents. v2.0.1 schema. Triplicated installs across skill roots.",
+      "memory_anchors": [
+        "schema const: '2.0.1'",
+        "case_file.pivots requires disproof_evidence_ids cross-references",
+        "repair agent must re-validate audit invariant, not trust the repair contract"
+      ]
+    },
+    {
+      "name": "center-geo",
+      "aliases": ["center-geo", "center_geo", "multigeometry", "center multigeometry"],
+      "path": "C:/hermes/hermes-agent/apps/center-geo",
+      "stack": ["typescript"],
+      "description": "CENTER-MULTIGEOMETRY — multi-geometry engine inside hermes-agent/apps/. Stage B+ shipped 2026-06-26/30: 2 engines wired (radial T09, cycle T10) plus anomaly/boundary. 290 tests.",
+      "memory_anchors": [
+        "cycle engine critical fix: propagate low[popped] to parent.low in iterative Tarjan",
+        "path trap: dispatch subagent paths to C:/hermes/hermes-agent/, NOT home-agent"
+      ]
+    },
+    {
+      "name": "poly-kalshi-dashboard",
+      "aliases": ["poly-kalshi", "kalshi dashboard", "polymarket dashboard", "prediction dashboard"],
+      "path": "C:/Users/zerop/Development/poly-kalshi-dashboard",
+      "alt_paths": ["C:/Users/zerop/Development/market-radar", "C:/Users/zerop/Development/prediction-market-analysis"],
+      "stack": ["python", "streamlit"],
+      "description": "Prediction-market analytics dashboard. Polymarket + Kalshi data, calibration, BTC drift study. Multiple iterations (v1, v2, v3).",
+      "memory_anchors": [
+        "Becker BTC calibration full report: C:/Users/zerop/Development/calibration_full_report.md"
+      ]
+    },
+    {
+      "name": "tessl-home-polish",
+      "aliases": ["tessl-home", "tessl polish", "home-polish"],
+      "path": "C:/Users/zerop/Development/tessl-home-polish-scratch",
+      "stack": ["typescript", "tessl"],
+      "description": "Tessl scratch project for home/landing polish work.",
+      "memory_anchors": []
+    },
+    {
+      "name": "tessl-smoke",
+      "aliases": ["tessl smoke", "tessl-smoke"],
+      "path": "C:/Users/zerop/Development/tessl-smoke",
+      "stack": ["tessl"],
+      "description": "Tessl smoke test project. Pointer-only AGENTS.md (uses @.tessl/RULES.md) — Hermes does NOT dereference @-includes, so real Tessl context requires plain-English instructions or explicit file open.",
+      "memory_anchors": []
+    },
+    {
+      "name": "Claude",
+      "aliases": ["claude projects", "claude-workspace"],
+      "path": "C:/Users/zerop/Claude",
+      "description": "Anthropic Claude projects workspace. Hosts Director's project artifacts (JobbyJob lives here). Treat as private control plane.",
+      "memory_anchors": []
+    }
+  ]
+}
