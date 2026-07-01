@@ -33,7 +33,7 @@
     },
     {
       "name": "JobbyJob",
-      "aliases": ["jobbyjob", "jobby job", "jobby-job", "jj", "claude-jobbyjob"],
+      "aliases": ["jobbyjob", "jobby job", "jobby-job", "jobby", "jj", "claude-jobbyjob"],
       "path": "C:/Users/zerop/Claude/Projects/JobbyJob",
       "alt_paths": ["C:/Users/zerop/Development/JobbyJob", "C:/Users/zerop/Development/Jobby Job"],
       "stack": ["markdown", "json"],
@@ -136,6 +136,204 @@
       "aliases": ["claude projects", "claude-workspace"],
       "path": "C:/Users/zerop/Claude",
       "description": "Anthropic Claude projects workspace. Hosts Director's project artifacts (JobbyJob lives here). Treat as private control plane.",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS-Sentry",
+      "aliases": ["argus-sentry", "argus sentry", "sentry"],
+      "path": "C:/Users/zerop/Development/argus-sentry",
+      "stack": ["node", "javascript"],
+      "description": "ARGUS Sentry security surveillance system (per .claude/CLAUDE.md). Two cores: Surveillance (cameras/vision/events) and Agent (chat/model-routing/tools). HTTP server on port 4098 (loopback).",
+      "memory_anchors": [
+        "PORT 4098 / 127.0.0.1 loopback only",
+        "test command: node --test tests/sentry.test.js (84 tests)",
+        "lib/ is v2 complete; src/ is v3 partial migration in progress"
+      ]
+    },
+    {
+      "name": "ARGUS Advanced",
+      "aliases": ["argus advanced", "argus.advanced", "advanced"],
+      "path": "C:/Users/zerop/Development/ARGUS.Advanced",
+      "stack": ["node"],
+      "description": "ARGUS.Advanced — local-first investigation workbench for Gmail-shaped data (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS Iris",
+      "aliases": ["argus iris", "argus.iris", "iris"],
+      "path": "C:/Users/zerop/Development/ARGUS.Iris",
+      "stack": ["python"],
+      "description": "ARGUS.Iris — local orchestration layer for ComfyUI model training and tuning (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS Forge",
+      "aliases": ["argus forge", "argus.forge", "forge"],
+      "path": "C:/Users/zerop/Development/ARGUS.Forge",
+      "stack": ["python"],
+      "description": "ARGUS.Forge — Python project (no public README at scan time).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS ControlPlane",
+      "aliases": ["argus controlplane", "argus_controlplane", "controlplane"],
+      "path": "C:/Users/zerop/Development/ARGUS_ControlPlane",
+      "stack": ["python"],
+      "description": "ARGUS ControlPlane — multi-phase control system. Phase 0 (emergency bump lane) and Phase 1 (durable transport) landed; Phases 2+ pending (per README, 2026-06-05).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ARGUS Personal",
+      "aliases": ["argus personal", "argus.personal"],
+      "path": "C:/Users/zerop/Development/ARGUS.Personal",
+      "description": "ARGUS.Personal — expects a Gmail API token.json at the root directory (per README instructions).",
+      "memory_anchors": []
+    },
+    {
+      "name": "BroCam",
+      "aliases": ["brocam", "bro-cam", "bro cam"],
+      "path": "C:/Users/zerop/Development/BroCam",
+      "description": "iPhone dual-camera streamer — like DroidCam but streams both cameras (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "BroClaw",
+      "aliases": ["broclaw", "bro-claw", "bro claw"],
+      "path": "C:/Users/zerop/Development/BroClaw",
+      "stack": ["go"],
+      "description": "BroClaw Sentinel — autonomous, local-first security intelligence platform (per README, Go).",
+      "memory_anchors": []
+    },
+    {
+      "name": "SkillClaw",
+      "aliases": ["skillclaw", "skill-claw"],
+      "path": "C:/Users/zerop/Development/SkillClaw",
+      "stack": ["python"],
+      "description": "SkillClaw — multi-agent / broad compatibility tool (per README banner).",
+      "memory_anchors": []
+    },
+    {
+      "name": "serena",
+      "aliases": ["serena"],
+      "path": "C:/Users/zerop/Development/serena",
+      "stack": ["python"],
+      "description": "serena — IDE for coding agents (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "services-dashboard",
+      "aliases": ["services dashboard", "services-dashboard"],
+      "path": "C:/Users/zerop/Development/services-dashboard",
+      "description": "Local-first health + control panel for every server, watchdog, webhook, and MCP (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "LadyRock Remaster",
+      "aliases": ["ladyrock", "ladyrock remaster", "ladyrock-remaster"],
+      "path": "C:/Users/zerop/Development/LadyRock-Remaster",
+      "stack": ["node", "typescript"],
+      "description": "Deterministic, reproducible audio mastering program visualization (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "LadyRockRemasterXL",
+      "aliases": ["ladyrock xl", "ladyrockremasterxl"],
+      "path": "C:/Users/zerop/Development/LadyRockRemasterXL",
+      "stack": ["node", "typescript"],
+      "description": "Variant of LadyRock-Remaster (per repo README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "LRStudio",
+      "aliases": ["lrstudio", "lr-studio", "lr studio"],
+      "path": "C:/Users/zerop/Development/LRStudio",
+      "stack": ["node", "typescript"],
+      "description": "Variant of LadyRock-Remaster (per repo README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "suno-dump",
+      "aliases": ["suno-dump", "suno dump", "sunodump"],
+      "path": "C:/Users/zerop/Development/suno-dump",
+      "description": "Pull your entire Suno music library into a structured dataset (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "grid-atlas",
+      "aliases": ["grid-atlas", "grid atlas", "atlas"],
+      "path": "C:/Users/zerop/Development/grid-atlas",
+      "stack": ["node"],
+      "description": "Grid Atlas — \"where the cloud touches dirt\" (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "gmail-coach",
+      "aliases": ["gmail-coach", "gmail coach"],
+      "path": "C:/Users/zerop/Development/gmail-coach",
+      "stack": ["node"],
+      "description": "Gmail coaching tool (Node.js, no public README at scan time).",
+      "memory_anchors": []
+    },
+    {
+      "name": "pixel-agents-standalone",
+      "aliases": ["pixel-agents", "pixel agents", "pixel-agents-standalone"],
+      "path": "C:/Users/zerop/Development/pixel-agents-standalone",
+      "stack": ["node", "typescript"],
+      "description": "Standalone web app that visualizes Claude Code sessions as pixel-art characters (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "vibecoder-agent-framework",
+      "aliases": ["vibecoder", "vibecoder agent", "vibecoder-agent-framework"],
+      "path": "C:/Users/zerop/Development/vibecoder_agent_framework",
+      "description": "Structured, repeatable framework for AI coding agents on Windows (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "RTSPScanner",
+      "aliases": ["rtspscanner", "rtsp-scanner", "rtsp scanner"],
+      "path": "C:/Users/zerop/Development/RTSPScanner",
+      "stack": ["python"],
+      "description": "RTSP scanner — usable as command-line utility or as a class (per PyPI README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "prediction-market-analysis",
+      "aliases": ["prediction-market", "prediction market", "prediction-market-analysis"],
+      "path": "C:/Users/zerop/Development/prediction-market-analysis",
+      "stack": ["python"],
+      "description": "Framework for analyzing prediction market data, including the largest publicly available datasets (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "market-radar",
+      "aliases": ["market-radar", "market radar", "radar"],
+      "path": "C:/Users/zerop/Development/market-radar",
+      "description": "Local, realtime market intelligence dashboard for IRA / portfolio vigilance (per README).",
+      "memory_anchors": []
+    },
+    {
+      "name": "ComfyUI",
+      "aliases": ["comfyui", "comfy-ui", "comfy ui"],
+      "path": "C:/Users/zerop/Development/ComfyUI",
+      "stack": ["python"],
+      "description": "ComfyUI — Stable Diffusion GUI and backend (third-party Python ML tool, used by ARGUS.Iris).",
+      "memory_anchors": []
+    },
+    {
+      "name": "kohya_ss",
+      "aliases": ["kohya", "kohya_ss", "kohya-ss"],
+      "path": "C:/Users/zerop/Development/kohya_ss",
+      "stack": ["python"],
+      "description": "kohya_ss — GUI and CLI for training diffusion models (third-party Python ML tool).",
+      "memory_anchors": []
+    },
+    {
+      "name": "llama.cpp",
+      "aliases": ["llama.cpp", "llamacpp", "llama-cpp"],
+      "path": "C:/Users/zerop/Development/llama.cpp",
+      "stack": ["python", "cpp"],
+      "description": "llama.cpp — LLM inference in C/C++ with Python bindings (third-party ML runtime).",
       "memory_anchors": []
     }
   ]
