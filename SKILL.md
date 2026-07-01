@@ -26,7 +26,7 @@ in `projects.py`.
 
 - Director says "the path to SunoSavvy", "JobbyJob stuff", "what's
   that project called", "where do I keep X", "the opencode fork",
-  "argus family", "verba chainsaw", "what's the test command for
+  "argus family", "verbal chainsaw", "what's the test command for
   center-audit", etc.
 - ANY mention of a registered project name — even casually — load
   the registry first, do NOT default to `find` / `ls` / `search_files`.
