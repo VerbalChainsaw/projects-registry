@@ -40,7 +40,7 @@ SCAN_SKIP_NAMES = frozenset({
     "coverage", "out", "target", "_stashed", "_agent-workspace",
     "backups", "archives", "scratchpads", "downloads", "documents",
     "uploads", "textgen", "recent", "media", "desktop", "application data",
-    "local settings", "my documents", "node_modules", "bin", "lib",
+    "local settings", "my documents", "bin", "lib",
     "include", "scripts", "prompts", "datasets", "docs", "research",
     "files", "img", "notes", "notes-old", "pets", "mavis", "hermes",
     "taxes", "finances", "naea", "youtube", "reddit", "resumes",
@@ -63,7 +63,7 @@ SCAN_MARKERS = (
     "package.json", "pyproject.toml", "Cargo.toml", "go.mod",
     "setup.py", "Gemfile", "composer.json", "build.gradle",
     "pubspec.yaml", "mix.exs", "README.md", "AGENTS.md",
-    "pyproject", "requirements.txt", "main.py", "app.py", "index.js",
+    "requirements.txt", "main.py", "app.py", "index.js",
     "index.ts", "src", "lib", "tests", "test",
 )
 
@@ -100,14 +100,13 @@ def _norm(s: str) -> str:
 def lookup(mention: str, idx, data) -> list[dict]:
     """Return all candidate projects matching `mention`.
 
-    Match tiers (case-insensitive, separator-insensitive):
-      1. Exact normalized match (after space/hyphen/underscore collapse)
-      2. Substring match (mention in alias, or alias in mention)
-      3. Sorted longest-alias-first within combined pool
+    Match logic: case-insensitive, separator-insensitive substring match
+    (mention in alias, OR alias in mention). Combined pool sorted longest-
+    alias-first. Empty mention returns [].
 
-    Returns [] for empty mention. Multiple candidates means the mention
-    is genuinely ambiguous (e.g. "argus" → Hermes + ARGUS_*) — the caller
-    must disambiguate. Single candidate returns as the unambiguous match.
+    Multiple candidates means the mention is genuinely ambiguous (e.g.
+    "argus" → Hermes + ARGUS_*) — the caller must disambiguate. Single
+    candidate returns as the unambiguous match.
     """
     m = _norm(mention)
     if not m:
@@ -134,12 +133,15 @@ def lookup(mention: str, idx, data) -> list[dict]:
 
 
 def format_record(p: dict) -> str:
+    """Render a project record as a human-readable block. Ponytail: missing
+    optional fields render as '<missing>' rather than literal 'None' so the
+    output stays grep-able."""
     lines = [
-        f"PROJECT: {p.get('name', '<missing>')}",
-        f"PATH: {p.get('path', '<missing>')}",
+        f"PROJECT: {p.get('name') or '<missing>'}",
+        f"PATH: {p.get('path') or '<missing>'}",
         f"ALIASES: {', '.join([p.get('name', '')] + (p.get('aliases') or []))}",
         f"TEST: {p.get('test_cmd') or '—'}",
-        f"DESCRIPTION: {p.get('description', '<missing>')}",
+        f"DESCRIPTION: {p.get('description') or '<missing>'}",
     ]
     anchors = p.get("memory_anchors") or []
     lines.append(f"MEMORY ANCHORS: {'; '.join(anchors) if anchors else 'none'}")
@@ -279,14 +281,10 @@ def _scan_extract_entry_points(path: Path) -> list[str]:
         if (path / candidate).exists() and candidate not in found:
             found.append(candidate)
 
-    # Python: pyproject.toml [project.scripts] — TOML is fragile to parse; just
-    # check for the [project] section header and surface that there's an entry.
-    pyproject = path / "pyproject.toml"
-    if pyproject.exists() and "pyproject.toml" not in found:
-        txt = _scan_read_text(pyproject)
-        if "[project.scripts]" in txt or "[tool.poetry.scripts]" in txt:
-            # ponytail: don't try to parse TOML inline — note the section exists.
-            found.append("pyproject.toml [scripts]")
+    # Ponytail: drop the pyproject.toml [scripts] branch — Reasoner flagged
+    # that the literal string "pyproject.toml [scripts]" isn't a real entry
+    # point and would confuse consumers. Parsing TOML inline is more code
+    # than it's worth; surface the well-known root files instead.
 
     return found[:_MAX_ENTRIES_PER_PROJECT]
 
@@ -398,12 +396,10 @@ def _cmd_scan(argv: list[str]) -> int:
     """Handle the --scan flag. Prints JSON to stdout. Returns 0."""
     diff_only = "--diff" in argv
     if diff_only:
-        try:
-            data = _load()
-        except SystemExit as e:
-            # No registry yet — scan everything.
-            print(f"# warning: registry not loaded ({e}); showing full scan", file=sys.stderr)
-            data = {"projects": []}
+        # --diff requires the registry to compare against; let _load() error
+        # out naturally if it's missing. No silent fallback that hides a
+        # real config issue.
+        data = _load()
         known = {p["path"] for p in data.get("projects", [])}
         out = _scan_diff(known)
     else:
@@ -541,15 +537,15 @@ def _selftest() -> int:
         fails += 1
     else:
         print(f"OK: scan candidates well-formed ({len(scan_a)} entries)")
-    # entry_points + endpoints must respect the cap (no project should
-    # return more than _MAX_ENTRIES_PER_PROJECT = 10 entries).
+    # entry_points + endpoints must respect the per-project cap.
     over_cap = [c["name"] for c in scan_a
-                if len(c["entry_points"]) > 10 or len(c["endpoints"]) > 10]
+                if len(c["entry_points"]) > _MAX_ENTRIES_PER_PROJECT
+                or len(c["endpoints"]) > _MAX_ENTRIES_PER_PROJECT]
     if over_cap:
         print(f"FAIL: scan cap violated for {len(over_cap)} projects: {over_cap[:3]}")
         fails += 1
     else:
-        print(f"OK: scan respects per-project cap (10)")
+        print(f"OK: scan respects per-project cap ({_MAX_ENTRIES_PER_PROJECT})")
     # No mutation: registry must be unchanged after scan.
     data_after = _load()
     if data_after != data:
