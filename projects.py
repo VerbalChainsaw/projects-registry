@@ -338,8 +338,9 @@ def _scan_extract_endpoints(path: Path) -> list[str]:
 def _scan_classify(path: Path) -> dict | None:
     """If path looks like a project, return a candidate record. Else None.
 
-    Ponytail: skip symlinks pointing outside SCAN_ROOTS to avoid following
-    arbitrary filesystem targets during a scan.
+    Ponytail: skip ALL symlinks — symlink targets inside SCAN_ROOTS still
+    create duplicate hits and risk following outside the roots if a target
+    later gets moved. Real path only.
     """
     name = path.name
     if not name or name.startswith("."):
