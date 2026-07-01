@@ -335,6 +335,20 @@
       "stack": ["python", "cpp"],
       "description": "llama.cpp — LLM inference in C/C++ with Python bindings (third-party ML runtime).",
       "memory_anchors": []
+    },
+    {
+      "name": "Philips Roku Remote",
+      "aliases": ["philips-roku-remote", "philips roku remote", "roku-remote", "roku remote", "roku web remote"],
+      "path": "C:/Users/zerop/philips-roku-remote",
+      "stack": ["python", "html", "javascript"],
+      "test_cmd": "cd C:/Users/zerop/philips-roku-remote && python test_roku_tv_web.py && python test_roku_tv_remote.py && python roku_tv_web.py --selftest",
+      "build_cmd": "cd C:/Users/zerop/philips-roku-remote && pyinstaller --noconfirm --clean --onefile --name philips-roku-web-remote roku_tv_web.py",
+      "description": "Local Philips Roku TV control suite — browser remote, app launcher, saved macros, deep-link tools, diagnostics, and gated Roku developer-toolbox onboarding.",
+      "memory_anchors": [
+        "live page defaults to http://127.0.0.1:8765/ targeting 10.10.10.45",
+        "compiled artifact: dist/philips-roku-web-remote.exe",
+        "developer-enabled currently reads false on the target TV, so sideload/package/screenshot flows stay gated"
+      ]
     }
   ]
 }
