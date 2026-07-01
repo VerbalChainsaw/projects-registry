@@ -5,9 +5,9 @@ Idempotent. Re-running is safe — existing copies are overwritten
 (dirs_exist_ok=True), and each copy is verified by running the skill's
 own selftest when one exists.
 
-Roots:
-  C:/Users/zerop/Development/projects-registry/        (this repo, projects-registry)
-  C:/hermes/skills/devops/external-model-routing/      (Hermes, external-model-routing)
+Roots (in install order):
+  C:/hermes/skills/                                    (Hermes runtime)
+  C:/Users/zerop/.mavis/skills/                        (Mavis daemon)
   C:/Users/zerop/.config/opencode/skills/              (opencode)
   C:/Users/zerop/.claude/skills/                       (Claude Code)
   C:/Users/zerop/.codex/skills/                        (Codex)
@@ -26,20 +26,34 @@ import sys
 from pathlib import Path
 
 # (skill name, absolute source dir, selftest script relative to skill dir,
-#  install mode: 'full' = copy everything, 'skill_md_only' = copy only SKILL.md
-#  (used for roots that don't bundle scripts, e.g. Mavis))
+#  optional SKILL.md override filename in `src`).
+# When override is set, that file is copied as SKILL.md (instead of the
+# default SKILL.md) — for skill_md_only roots. Lets Hermes get a SKILL.md
+# that references the canonical repo path for actual lookups.
 SKILLS = [
-    ("projects-registry",      Path(r"C:/Users/zerop/Development/projects-registry"), "projects.py"),
-    ("external-model-routing", Path(r"C:/hermes/skills/devops/external-model-routing"), None),
+    ("projects-registry",      Path(r"C:/Users/zerop/Development/projects-registry"), "projects.py", "SKILL.hermes.md"),
+    ("external-model-routing", Path(r"C:/hermes/skills/devops/external-model-routing"), None, None),
 ]
 
-# (root path, install mode for THIS root)
+# (root path, install mode).
+# 'full' = copy everything; 'skill_md_only' = keep SKILL.md only.
 TARGETS = [
-    (Path(r"C:/Users/zerop/.mavis/skills"),                 "skill_md_only"),
-    (Path(r"C:/Users/zerop/.config/opencode/skills"),       "full"),
-    (Path(r"C:/Users/zerop/.claude/skills"),                "full"),
-    (Path(r"C:/Users/zerop/.codex/skills"),                 "full"),
+    (Path(r"C:/hermes/skills"),                          "skill_md_only"),
+    (Path(r"C:/Users/zerop/.mavis/skills"),             "skill_md_only"),
+    (Path(r"C:/Users/zerop/.config/opencode/skills"),   "full"),
+    (Path(r"C:/Users/zerop/.claude/skills"),            "full"),
+    (Path(r"C:/Users/zerop/.codex/skills"),             "full"),
 ]
+
+
+def _copy_skill_md(src: Path, dst: Path, override_name: str | None) -> None:
+    """Copy the SKILL.md, optionally from an override filename in src."""
+    src_md = src / (override_name or "SKILL.md")
+    dst_md = dst / "SKILL.md"
+    try:
+        dst_md.write_text(src_md.read_text(encoding="utf-8"), encoding="utf-8")
+    except OSError as e:
+        sys.exit(f"SKILL.md copy failed: {src_md} → {dst_md}: {e}")
 
 
 def _run_selftest(skill_dir: Path, script: str, dry: bool) -> tuple[bool, str]:
@@ -66,12 +80,17 @@ def _run_selftest(skill_dir: Path, script: str, dry: bool) -> tuple[bool, str]:
         return False, f"selftest failed to launch: {e}"
 
 
-def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dict:
+def _install_skill(name: str, src: Path, selftest: str | None,
+                   skill_md_override: str | None, dry: bool) -> dict:
     """Copy skill from source to every target. Return per-target status."""
     if not src.is_dir():
         return {"name": name, "src": str(src), "error": f"source missing: {src}", "targets": []}
     if not (src / "SKILL.md").exists():
         return {"name": name, "src": str(src), "error": f"SKILL.md missing in source: {src}", "targets": []}
+    # ponytail: fail loud if override is set but missing — operator should
+    # notice before shipping a broken skill.
+    if skill_md_override and not (src / skill_md_override).exists():
+        sys.exit(f"SKILL.md override {skill_md_override!r} missing in source {src}")
 
     target_results = []
     for dst_root, mode in TARGETS:
@@ -81,8 +100,8 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
             target_results.append({"label": label, "skipped": True, "reason": f"root missing: {dst_root}"})
             continue
 
-        # ponytail: skill_md_only roots (e.g. Mavis) ignore everything except SKILL.md.
-        # Always exclude .git/ — git pack objects have read-only ACLs and break shutil.copytree.
+        # ponytail: skill_md_only roots keep SKILL.md only. Always exclude
+        # .git/ — git pack objects have read-only ACLs and break shutil.copytree.
         patterns = [".git", ".gitignore"]
         if mode == "skill_md_only":
             patterns += ["*.py", "*.json", "*.md.bak"]
@@ -90,7 +109,8 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
         try:
             if not dry:
                 shutil.copytree(src, dst, dirs_exist_ok=True, ignore=ignore_fn)
-                # skill_md_only: prune anything that snuck through besides SKILL.md
+                # skill_md_only: prune anything that snuck through besides SKILL.md,
+                # then install the (possibly overridden) SKILL.md.
                 if mode == "skill_md_only":
                     for f in dst.iterdir():
                         if f.name != "SKILL.md":
@@ -98,6 +118,7 @@ def _install_skill(name: str, src: Path, selftest: str | None, dry: bool) -> dic
                                 shutil.rmtree(f)
                             else:
                                 f.unlink()
+                    _copy_skill_md(src, dst, skill_md_override)
         except PermissionError as e:
             target_results.append({"label": label, "ok": False, "reason": f"permission denied: {e}"})
             continue
@@ -143,8 +164,8 @@ def main(argv: list[str]) -> int:
     print(f"[install_skills] targets: {len(TARGETS)}")
     overall_ok = True
 
-    for name, src, selftest in selected:
-        result = _install_skill(name, src, selftest, args.dry_run)
+    for name, src, selftest, skill_md_override in selected:
+        result = _install_skill(name, src, selftest, skill_md_override, args.dry_run)
         if result["error"]:
             print(f"  [FAIL] {name}: {result['error']}")
             overall_ok = False
