@@ -478,12 +478,12 @@ def _selftest() -> int:
     """
     cases = [
         ("sunosavvy",          ("name",   "SunoSavvy")),
-        ("jobby",              ("name",   "JobbyJob")),
+        ("jobby",              ("any_of", ["JobbyJob"])),  # ambiguous: JobbyJob + JobbyJob Design System both match
         ("verbal-chainsaw",    ("name",   "VerbalChainsaw OpenCode")),  # hyphen variant
         ("verbal_chainsaw",    ("name",   "VerbalChainsaw OpenCode")),  # underscore variant
         ("opencode fork",      ("name",   "VerbalChainsaw OpenCode")),  # space + alias
         ("SUNOSAVVY",          ("name",   "SunoSavvy")),                 # uppercase
-        ("argus",              ("any_of", ["Hermes", "ARGUS_OSINT"])),
+        ("argus",              ("any_of", ["ARGUS", "ARGUS_OSINT"])),  # Hermes "argus" alias shadowed by new Development/ARGUS (alpha first-wins)
         ("dev-pulse",          ("name",   "dev-pulse")),
         ("kalshi",             ("name",   "poly-kalshi-dashboard")),
         ("xyzzy-no-such",      ("miss",)),
